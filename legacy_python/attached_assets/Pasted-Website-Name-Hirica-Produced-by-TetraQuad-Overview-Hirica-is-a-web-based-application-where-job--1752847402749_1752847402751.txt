@@ -1,0 +1,163 @@
+Website Name: Hirica
+Produced by TetraQuad
+Overview:
+Hirica is a web-based application where job seekers can take AI-generated assessments based on respective job offers from companies.
+Structure: Backend and Frontend Process
+1. Front Page
+The landing page of the website should have a classic and rich design, inspired by websites like cybrary.com, darkroom.com, and microsoft.com.
+The main theme color should be black, similar to Cybrary’s aesthetic.
+A dual-theme option (dark and light modes) should be available for users to adapt according to their preferences.
+The frontend design should be modern, engaging, and professional.
+2. Landing Page Details
+The landing page should include:
+Detailed analytics and insights about the website’s users.
+Sign-in and Sign-up options for Job Seekers and Recruiters.
+3. Sign In / Sign Up Pages
+There will be two separate flows:
+Job Seeker Sign-Up: Fields include Name, Email, Mobile Number, LinkedIn ID (optional), GitHub ID (optional), Password.
+Both Email and Mobile Number should be verified through OTP or a similar method.
+Recruiter Sign-Up: Fields include Company Name, Location, Email, Recruiter’s Position in the Company, and Password.
+Email verification is required.
+After signing up, users can sign in using their email and password. Each user type (Job Seeker or Recruiter) will be redirected to their respective dashboards with a unique secondary color theme.
+4. Recruiter Dashboard
+Upon signing in, recruiters can:
+Add Jobs
+Manage Jobs
+Review Applicants
+Handle Assessment Approvals
+Access various job and applicant management tools
+5. Add Job
+Recruiters can post jobs by filling in:
+Title
+Description
+Requirements
+Responsibilities
+Skills Needed (comma-separated)
+Expiry Date (after which the job auto-expires)
+Salary
+Job Location
+Job Type: Full-time / Part-time / Internship
+Experience Level
+Any other relevant details
+6. Manage Jobs
+Recruiters can:
+View all added jobs
+Edit, Pause, or Delete job listings
+Review applications submitted by job seekers
+Approve or reject assessments via the "Assessment Pending" section
+7. Job Seeker Dashboard
+Job seekers, upon signing in, can:
+View available job listings added by recruiters
+See previously applied jobs, pending assessments, and results
+Before applying, they must complete their profile, including resume and all required personal/professional information
+To apply for a job, the job seeker must submit a cover letter and their resume, which will be forwarded to the recruiter
+Upon approval, the seeker will proceed to take the AI-generated assessment
+8. Recruiter’s View of Applications
+Recruiters can:
+View applicants along with their resumes and cover letters
+Approve or reject candidates based on resume screening
+Upon approval, use the "Generate Assessment" button
+This triggers an AI-generated assessment using the latest Groq AI model for speed and accuracy
+Questions will be based on the job description, required skills, and responsibilities
+Questions may include MCQs, coding tasks, descriptive text, and even project-based challenges
+AI ensures no irrelevant or off-topic questions
+There is no fixed number of questions to maintain uniqueness and test integrity
+For each question:
+Time limits and rules are auto-assigned (editable by recruiter)
+Recruiters can edit, delete, or regenerate individual questions
+Rules include disabling: copy-paste, screen minimization, tab switching, AI tool usage, etc.
+Recruiters can manually add custom questions and rules
+Optionally, a project-based task can be added — AI can generate a topic and description, or the recruiter can input one manually
+Upon finalizing the test, it is submitted and sent to the selected job seeker
+9. Job Seeker Test Interface
+If approved:
+Job seeker sees test instructions
+Each question appears on a separate page
+Rules per question must be followed; violations are flagged as malpractice
+Answers are auto-saved upon completion of each question
+If a coding question appears, a built-in code compiler will be available with multiple language support
+Output is shown to verify code functionality
+Code and output are sent to the recruiter for review
+After submission:
+Results are generated and sent to both the recruiter and job seeker dashboards
+If there is a project, the job seeker can complete it externally and upload it later as a .zip file
+10. Post-Assessment Decision
+Recruiters can evaluate results, code, and project submissions
+Based on performance, recruiters can send a hiring decision or letter to the job seeker
+11. Deployment Essentials
+Add cookies and security mechanisms for proper website deployment
+Ensure smooth functioning on the live internet
+12. Job Save & Alert Feature
+Job seekers can save jobs and receive alerts for similar job postings
+Improves user engagement and retention
+13. Test Integrity Monitoring (AI-Enabled Proctoring)
+Face detection or screen recording (where permitted) to monitor test violations
+Violations (e.g., tab switching or copy-paste) are reported in the recruiter’s dashboard
+Ensures credible assessments
+14. Feedback and Reporting System
+Job seekers can provide feedback on assessments or job posts
+Users can report inappropriate job posts or recruiter behavior
+Encourages transparency and trust
+15. Notification System
+Real-time notifications (via email and in-app):
+Recruiters: When someone applies or submits a test
+Job seekers: When tests are assigned, approved, or results declared
+Keeps all users informed
+16. Dashboard Analytics
+Recruiters: Application count, assessment status, average scores
+Job Seekers: Jobs applied, test pass rate, skill improvement suggestions
+Provides valuable insights for both users
+17. User Onboarding and Tutorial
+After signup, show a quick tutorial pop-up or guide
+Especially helpful for recruiters using AI-powered tools
+Enhances user experience
+18. Admin Dashboard (Super Admin Panel)
+A separate secure panel for the TetraQuad platform admin:
+Manage users (ban, verify, delete)
+View platform analytics (daily users, test activity, active jobs)
+Flag or verify suspicious jobs/recruiters
+Ensures healthy platform operation
+19. Skill Profiles + Endorsements
+Job seeker profile shows AI-generated skill tags based on:
+Resume parsing
+Completed assessments
+Linked GitHub/LinkedIn data
+Recruiters can endorse skills publicly
+Enhances credibility and skill mapping
+20. Assessment Re-attempt Policy
+Job seekers may re-attempt assessments if:
+Recruiter allows it
+Disqualified due to technical issues
+Include cooldown periods or retry tokens
+Provides flexibility and fairness
+21. Interview Scheduler
+Recruiters can schedule interviews (Zoom, Google Meet, or in-app call)
+Calendar sync and reminders for both parties
+Streamlines the post-assessment stage
+22. Assessment Difficulty Rating
+Job seekers can anonymously rate the difficulty and relevance of assessments
+Helps recruiters improve test quality
+Useful for AI fine-tuning
+23. Talent Pooling / Bookmarking
+Recruiters can bookmark or save strong candidates for future roles
+Add tags, notes, and contact details
+Useful for long-term hiring plans
+24. AI-Based Job Recommendations
+AI suggests jobs to seekers based on:
+Resume content
+Test history
+Cover letter analysis
+Enhances job discovery and targeting
+25. Legal and Data Compliance
+Include privacy policy, terms of use, and data deletion options
+Encrypt sensitive data (resumes, emails, test responses)
+Ensure compliance with India’s DPDP Act and GDPR
+26. Project Submission Tracker
+For take-home projects:
+Add deadline reminders, upload progress bar, and checkpoint tracking
+Notify recruiters when submitted or overdue
+Improves accountabilit
+27. Internal Messaging / Chat System
+Secure, optional chat between recruiters and job seekers post shortlisting
+Time-limited or moderated to avoid spam
+Adds human interaction when needed

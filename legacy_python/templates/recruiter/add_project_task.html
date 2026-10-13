@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Add Project Task - Hirica{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Add Project Task
+                    </h4>
+                    <small class="text-white-50">Assessment: {{ assessment.title }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Project Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="Enter project title">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Project Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required
+                                      placeholder="Describe what the candidate needs to build..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="requirements" class="form-label">Requirements & Specifications</label>
+                            <textarea class="form-control" id="requirements" name="requirements" rows="6"
+                                      placeholder="List technical requirements, features, and specifications..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="deadline_hours" class="form-label">Deadline (hours)</label>
+                            <select class="form-select" id="deadline_hours" name="deadline_hours">
+                                <option value="24">24 hours</option>
+                                <option value="48">48 hours</option>
+                                <option value="72" selected>72 hours</option>
+                                <option value="96">96 hours</option>
+                                <option value="120">120 hours (5 days)</option>
+                                <option value="168">168 hours (7 days)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('recruiter.view_assessment', assessment_id=assessment.id) }}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Assessment
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add Project Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

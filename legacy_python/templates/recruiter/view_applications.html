@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Applications for {{ job.title }} - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter.manage_jobs') }}">Manage Jobs</a></li>
+                    <li class="breadcrumb-item active">Applications</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="display-6 fw-bold">{{ job.title }}</h1>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-building me-2"></i>{{ job.location }} • 
+                        <i class="fas fa-briefcase me-2"></i>{{ job.job_type }} • 
+                        <i class="fas fa-chart-line me-2"></i>{{ job.experience_level }}
+                    </p>
+                    <div class="mb-3">
+                        {% for skill in job.skills_list %}
+                            <span class="badge bg-secondary me-1">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="stat-card-sm">
+                        <h3 class="text-primary">{{ applications|length }}</h3>
+                        <small class="text-muted">Total Applications</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% if applications %}
+                <div class="row g-4">
+                    {% for application in applications %}
+                    <div class="col-lg-6">
+                        <div class="card application-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0">{{ application.jobseeker.full_name }}</h5>
+                                    <small class="text-muted">Applied {{ application.applied_at|time_ago }}</small>
+                                </div>
+                                <div>
+                                    {% if application.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif application.status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Candidate Info -->
+                                <div class="candidate-info mb-3">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Contact</small>
+                                            <small>{{ application.jobseeker.mobile_number }}</small>
+                                        </div>
+                                        <div class="col-4">
+                                            {% if application.jobseeker.linkedin_id %}
+                                                <small class="text-muted d-block">LinkedIn</small>
+                                                <a href="{{ application.jobseeker.linkedin_id }}" target="_blank" class="text-decoration-none">
+                                                    <i class="fab fa-linkedin"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-4">
+                                            {% if application.jobseeker.github_id %}
+                                                <small class="text-muted d-block">GitHub</small>
+                                                <a href="{{ application.jobseeker.github_id }}" target="_blank" class="text-decoration-none">
+                                                    <i class="fab fa-github"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cover Letter Preview -->
+                                <div class="cover-letter-preview mb-3">
+                                    <h6 class="mb-2">Cover Letter:</h6>
+                                    <div class="cover-letter-text">
+                                        {{ application.cover_letter[:150] }}
+                                        {% if application.cover_letter|length > 150 %}...{% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Skills -->
+                                {% if application.jobseeker.skills %}
+                                <div class="skills-preview mb-3">
+                                    <h6 class="mb-2">Skills:</h6>
+                                    <div class="skills-tags">
+                                        {% for skill in application.jobseeker.skills.split(',')[:5] %}
+                                            <span class="badge bg-light text-dark me-1">{{ skill.strip() }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('recruiter.review_application', app_id=application.id) }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Review Details
+                                    </a>
+                                    
+                                    {% if application.status == 'pending' %}
+                                        <div>
+                                            <a href="{{ url_for('recruiter.approve_application', app_id=application.id) }}" 
+                                               class="btn btn-success btn-sm me-1">
+                                                <i class="fas fa-check me-1"></i>Approve
+                                            </a>
+                                            <a href="{{ url_for('recruiter.reject_application', app_id=application.id) }}" 
+                                               class="btn btn-danger btn-sm">
+                                                <i class="fas fa-times me-1"></i>Reject
+                                            </a>
+                                        </div>
+                                    {% elif application.status == 'approved' and application.assessment %}
+                                        <div>
+                                            {% if application.assessment.status == 'draft' %}
+                                                <a href="{{ url_for('recruiter.edit_assessment', assessment_id=application.assessment.id) }}" 
+                                                   class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-edit me-1"></i>Edit Assessment
+                                                </a>
+                                            {% elif application.assessment.status == 'published' %}
+                                                <span class="badge bg-info">Assessment Sent</span>
+                                            {% elif application.assessment.status == 'completed' %}
+                                                <a href="#" class="btn btn-info btn-sm">
+                                                    <i class="fas fa-chart-bar me-1"></i>View Results
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    {% elif application.status == 'approved' %}
+                                        <a href="{{ url_for('recruiter.generate_assessment', app_id=application.id) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-robot me-1"></i>Generate Assessment
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No applications yet</h4>
+                        <p class="text-muted">When candidates apply for this job, they will appear here.</p>
+                        <a href="{{ url_for('recruiter.manage_jobs') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Jobs
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirm approval/rejection
+    const approveButtons = document.querySelectorAll('a[href*="approve_application"]');
+    const rejectButtons = document.querySelectorAll('a[href*="reject_application"]');
+    
+    approveButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to approve this application?')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    rejectButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to reject this application?')) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

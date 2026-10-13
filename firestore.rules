@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isRecruiter() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'recruiter' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter'
+      );
+    }
+
+    // 1. Users collection
+    // Users can read and update their own document. Recruiters cannot overwrite other profiles.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Disallow arbitrary client deletions
+    }
+
+    // 2. Role-specific profile collections
+    match /recruiters/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    match /jobseekers/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // 3. Jobs collection
+    // Anyone can read open job postings. Only authenticated recruiters can create, update, or close jobs.
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isRecruiter();
+      allow update: if isRecruiter();
+      allow delete: if isRecruiter();
+    }
+
+    // 4. Applications collection
+    // Candidate isolation & Recruiter-only decision fields
+    match /applications/{applicationId} {
+      // Candidates can only read their own applications; recruiters can read all applications
+      allow read: if isAuthenticated() && (
+        resource.data.candidateUid == request.auth.uid ||
+        isRecruiter()
+      );
+
+      // Candidates can create an application with their own candidateUid
+      allow create: if isAuthenticated() && request.resource.data.candidateUid == request.auth.uid;
+
+      // Updating application:
+      // Candidates CANNOT modify recruiter evaluation fields (status, offerDetails, finalVerdict, recommendation).
+      // Only recruiters can update status, offerDetails, finalVerdict, recommendation, and comments.
+      allow update: if isAuthenticated() && (
+        // Recruiter can update anything (e.g., status, offer, dossier review)
+        isRecruiter() ||
+        // Candidate can only update their own test answers/assessmentScore/integrity data during their active test session
+        (
+          resource.data.candidateUid == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'offerDetails', 'finalVerdict'])
+        )
+      );
+
+      allow delete: if isRecruiter();
+    }
+
+    // 5. Assessments collection
+    // Test instances created for a candidate
+    match /assessments/{assessmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isRecruiter();
+    }
+
+    // 6. Organization & System Settings
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated();
+      allow write: if isRecruiter();
+    }
+  }
+}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Review Application - {{ application.jobseeker.full_name }} - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter.view_applications', job_id=application.job_id) }}">Applications</a></li>
+                    <li class="breadcrumb-item active">Review</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Application Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">{{ application.jobseeker.full_name }}</h4>
+                        <small class="text-muted">Applied for {{ application.job.title }}</small>
+                    </div>
+                    <div>
+                        {% if application.status == 'pending' %}
+                            <span class="badge bg-warning">Pending Review</span>
+                        {% elif application.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                        {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Cover Letter -->
+                    <div class="section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-envelope me-2"></i>Cover Letter
+                        </h5>
+                        <div class="cover-letter-content">
+                            {{ application.cover_letter|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+
+                    <!-- Resume -->
+                    {% if application.jobseeker.resume_filename %}
+                    <div class="section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-file-pdf me-2"></i>Resume
+                        </h5>
+                        <div class="resume-section">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-pdf fa-2x text-danger me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">{{ application.jobseeker.resume_filename }}</h6>
+                                    <a href="{{ url_for('main.uploaded_file', filename=application.jobseeker.resume_filename) }}" 
+                                       target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i>View Resume
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Skills -->
+                    {% if application.jobseeker.skills %}
+                    <div class="section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-cogs me-2"></i>Skills
+                        </h5>
+                        <div class="skills-section">
+                            {% for skill in application.jobseeker.skills.split(',') %}
+                                <span class="badge bg-secondary me-1 mb-1">{{ skill.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Experience -->
+                    {% if application.jobseeker.experience %}
+                    <div class="section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-briefcase me-2"></i>Experience
+                        </h5>
+                        <div class="experience-content">
+                            {{ application.jobseeker.experience|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Education -->
+                    {% if application.jobseeker.education %}
+                    <div class="section mb-4">
+                        <h5 class="section-title">
+                            <i class="fas fa-graduation-cap me-2"></i>Education
+                        </h5>
+                        <div class="education-content">
+                            {{ application.jobseeker.education|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    {% if application.status == 'pending' %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('recruiter.view_applications', job_id=application.job_id) }}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Applications
+                            </a>
+                            <div>
+                                <a href="{{ url_for('recruiter.reject_application', app_id=application.id) }}" 
+                                   class="btn btn-danger me-2">
+                                    <i class="fas fa-times me-2"></i>Reject
+                                </a>
+                                <a href="{{ url_for('recruiter.approve_application', app_id=application.id) }}" 
+                                   class="btn btn-success">
+                                    <i class="fas fa-check me-2"></i>Approve & Generate Assessment
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('recruiter.view_applications', job_id=application.job_id) }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Applications
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Candidate Summary -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>Candidate Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ application.jobseeker.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Phone:</strong></td>
+                            <td>{{ application.jobseeker.mobile_number }}</td>
+                        </tr>
+                        {% if application.jobseeker.linkedin_id %}
+                        <tr>
+                            <td><strong>LinkedIn:</strong></td>
+                            <td>
+                                <a href="{{ application.jobseeker.linkedin_id }}" target="_blank" class="text-decoration-none">
+                                    <i class="fab fa-linkedin me-1"></i>Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if application.jobseeker.github_id %}
+                        <tr>
+                            <td><strong>GitHub:</strong></td>
+                            <td>
+                                <a href="{{ application.jobseeker.github_id }}" target="_blank" class="text-decoration-none">
+                                    <i class="fab fa-github me-1"></i>Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Applied:</strong></td>
+                            <td>{{ application.applied_at|datetime }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Job Details -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-briefcase me-2"></i>Job Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ application.job.title }}</h6>
+                    <p class="text-muted mb-2">{{ application.job.location }}</p>
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ application.job.job_type }}</span>
+                        <span class="badge bg-info">{{ application.job.experience_level }}</span>
+                    </div>
+                    <div class="skills-required">
+                        <small class="text-muted d-block mb-1">Required Skills:</small>
+                        {% for skill in application.job.skills_list %}
+                            <span class="badge bg-light text-dark me-1 mb-1">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if application.assessment %}
+        {% set project_tasks = application.assessment.project_tasks %}
+        {% if project_tasks %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>Project Submissions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for task in project_tasks %}
+                    <div class="mb-4 border-bottom pb-3">
+                        <h6>{{ task.title }}</h6>
+                        <p class="text-muted">{{ task.description }}</p>
+                        {% set submission = task.submissions.first() %}
+                        {% if submission %}
+                            <div class="mb-2">
+                                <a href="{{ url_for('main.uploaded_file', filename=submission.file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i>Download Submission
+                                </a>
+                                <span class="text-muted ms-2">Submitted at: {{ submission.submitted_at|datetime }}</span>
+                            </div>
+                            <form method="POST" action="{{ url_for('recruiter.project_feedback', submission_id=submission.id) }}" class="row g-2 align-items-end">
+                                <div class="col-md-8">
+                                    <label for="feedback_{{ submission.id }}" class="form-label">Feedback</label>
+                                    <textarea class="form-control" id="feedback_{{ submission.id }}" name="feedback" rows="2">{{ submission.feedback or '' }}</textarea>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="score_{{ submission.id }}" class="form-label">Score</label>
+                                    <input type="number" class="form-control" id="score_{{ submission.id }}" name="score" min="0" max="100" step="0.1" value="{{ submission.score if submission.score is not none else '' }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-save me-1"></i>Save
+                                    </button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <span class="badge bg-warning">Not submitted yet</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if application.assessment and application.assessment.submissions and application.assessment.submissions.violations %}
+    <div class="card mt-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Rule Violations</h5>
+        </div>
+        <div class="card-body">
+            {% set violations = application.assessment.submissions.violations|from_json %}
+            <ul class="mb-0">
+                {% for violation in violations %}
+                <li>{{ violation.description }} ({{ violation.timestamp }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

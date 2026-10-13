@@ -1,0 +1,106 @@
+ebsite named Hirica produced by TetraQuad. 
+It's a website app of job seeker can take aisa generated assessment by the Respective job offers from company
+Structure, backend, frontend process:
+1.Front page:The landing page of website which looks classic and with best designs and color theme. It should be classic, rich looks like cybrary.com,darkroom.com,microsoft.com like frontend and landing page should be excellent.use our website main color as black where it looks like in website named cybrary.com
+We can also give double theme method to people to adapt to website
+2.Details in landing page:In landing page there would be more analysis of our website users and details of users. Also option to sign in or sign up for job seeker and recuiter. 
+3.Signin or sign up pages:Two options would be there one for job seeker and recuiter. 
+In job seeker signup there would be details to add respective details of job seeker Like names, email,mobile number, LinkedIn and github id (optional) ,passwordand things you need to add.the email and mobile number should be verified by otp or something. 
+In recuiter signup page there would be details to add respective details of recuiter like company names, place, email, recuiter position in company ,passwordand things you need to add. The email should be verified. 
+After signup they can signin.they can signin by email and password,so the appropriate people will be goes to appropriate dashboards.There would be seperate page for both of them and with different secondary color also. 
+4.The recuiter page:The page where the recuiter comes signin. There would be options to add jobs, manage jobs, review applicant's, assessment pending and more options with respective things
+5.Add job:Give the details of jobs which they are vacant to hire people to that place. Details of title, description, requirements, responsibly, skills needed with comma seperated, expiry date of job application(after this date job will be expire automatically), salary expected, place, full time or half time or Internship, experience, and other things which used to give details of the job
+6.Manage job:The recuiter can see all jobs which they added also they can edit, pause, delete and all things to the specified jobs. 
+Review applicants option would be there to review the job seekers
+Assessment pending option will be there to approve permission to take assessment s
+7.job seeker dashboard page:where the jobseeker after signin will be there. There they can see the jobs available and which has been added by recuiters.the jobs which they already applied, takes test, pending, results. 
+They can apply for the any job, before applying the job seeker should be submit and complete all the things required in profile. Resume, details of job seeker and all. 
+After that only job seeker can apply for job, he needed to take test, so option to apply for job assessment, for applying he should give cover letter for along with that and his resume also forward to respective recuiter. 
+8.Back to recuiter page:there they can see the job seekers who applied for jobs. By select it, it shows the cover letter and respective job seeker resume along with that. The recuiter can check the resume of job seeker and approve or reject the job seeker by resume presence. After that there shows a option to assessment generate along with respective job applied. The recuiter select assessment generate, the api ai tool which we implement will be generate the tests questions there which includes multiple choice, text, code or projects based backend or frontend codes which can be do by hours. The questions should be based on the skills, job description, responsible, requirements based on that job, also not ask any unwanted or outsyllabus questions to that.use ai as groq ai latest model for fastest. Questions should be unique and there are no restrictions about Number each assessment it's vary because otherwise people can cheat other system easily
+If questions are generated there for each questions there would be specified time and rules. Also recuiter have options to edit for each questions. Like for questions no 1 there would be options of edit time, rules, delete, regenerate. If regenerate the specified question should be regenerate by ai to other questions. If delete this question would not be there for test. There will be rules of to on and off copy paste, minimaing screen, switching tab, video camera,using other ai tools. Recuiter can select rules for each questions. 
+There would be default time and rules for each questions by ai process, if recuiter like to edit then he can edit
+At last there would be options to add question by recuiter own type and give specified rules. 
+Also there would be a option to add project based where recuiter can on or not, if it on our ai should generate a project topic and description which to the job, or recuiter can give topic by their own.
+After that recuiter can give submition and the questions will be sent to the job seeker who applied for the test. 
+9.back to jobseeker page:If recuiter approves, there he can see. While selecting it, go to another interface. the there would be instructions to take test.if he start test each questions would be in different pages. First questions would be there with proper rules there, if he disobey any rules the specified question will be marked as malpractice. He should obey all rules for specified questions. He should complete each questions by specified time, if finishes it auto save it. 
+If questions is to code of anything. Then our page has to prepare interface of code complier where all the languages and things will be selected and job seeker can verify the code works or not and see output. The same things will be sented through the results to recruiter. 
+After submitting test, the results should be generated.and sent to the both dashborads, with answers,results and if any violations of rules also.to recuiter also where they can see.
+If it has project, the job seeker can do project from other platforms and submit it as zip file later which sent to the recuiter also. 
+10.After receiving results ansseeing the projects if there they can hire or not job seeker with specific letter or options. 
+11.Need to add cookies, security part to deploy the websites to internet. 
+12.7. Job Save & Alert Feature
+Add: Option for job seekers to save jobs and receive alerts when similar jobs are posted.
+Why: Enhances user retention and job discovery
+13.Test Integrity Monitoring (AI-Enabled Proctoring)
+Add: Use face detection or screen recording (if permitted) to track test integrity. If rules like "no screen switching" or "no copy-paste" are violated, show this in recruiter dashboard.
+Why: Makes your AI assessments more credible and harder to cheat.
+14.Feedback and Reporting Feature
+Add: A section for job seekers to give feedback on the assessment or job posting.
+Add: Option to report job posts or recruiters for abuse or irrelevant tests.
+Why: Adds transparency, trust, and quality control.
+15.Notification System
+Add: Real-time notifications (email + in-app) for:
+Recruiters: When someone applies or submits a test.
+Job seekers: When test is assigned, approved, or results are declared.
+Why: Keeps users updated on key actions.
+16.Dashboard Analytics
+Add: Both job seeker and recruiter dashboards should display some analytics.
+Recruiters: Application count, assessment status breakdown, average test scores, etc.
+Job Seekers: Number of jobs applied, test pass rate, skill improvement tips.
+Why: Improves usability and engagement by showing useful insights.
+17.User Onboarding and Tutorial System
+Add: After signup, show a quick onboarding/tutorial popup or guide (especially for recruiters using AI tools for the first time).
+Why: Helps users understand how to use advanced features like test generation, rule setting, etc:
+11. Admin Dashboard (Super Admin Panel)
+Add: A separate secure dashboard for the platform admin (TetraQuad).
+Manage users (ban, verify, remove)
+See platform analytics (daily users, active jobs, test activity)
+Flag suspicious recruiter/job posts
+Manually verify company authenticity if needed
+Why: Ensures platform health and allows moderation.
+12. Job Seeker Skill Profile + Endorsements
+Add: A section showing AI-generated skill tags based on:
+Resume parsing
+Completed assessments
+Verified GitHub/LinkedIn data
+Add recruiter endorsements: if a recruiter is impressed, they can endorse a skill publicly.
+Why: Builds credibility, trust, and dynamic skill mapping.
+13. Assessment Re-attempt Policy
+Add: Rules or logic for re-attempting assessments if:
+The recruiter allows it
+Job seeker disqualified due to tech issues
+Include cooldown periods or retry tokens.
+Why: Fairer system with flexibility.
+14. Interview Scheduler
+Add: Allow recruiters to schedule interviews (Zoom, Google Meet, or in-app call links) once candidates pass tests.
+Add calendar sync or meeting reminders for both parties.
+Why: Reduces friction after the test stage and improves hiring pipeline.
+15. Assessment Difficulty Rating System
+Add: After the test, job seekers can rate the assessment's relevance and difficulty anonymously.
+These ratings could help:
+Recruiters improve future tests
+Platform to fine-tune AI-generated questions
+Why: Quality control and feedback loop.
+16. Talent Pooling / Bookmarking by Recruiters
+Add: Recruiters can save good candidates (even if not hired now) into a "Talent Pool" for future roles.
+Include tags, notes, and contact info.
+Why: Enables long-term hiring strategy for companies.
+17. Automated Job Recommendations for Job Seekers
+Add: An AI module to recommend jobs to candidates based on:
+Resume
+Assessment history
+Cover letter analysis
+Why: Makes job search more targeted and saves time.
+18. Legal + GDPR/Indian Privacy Compliance
+Add: Privacy policy, terms of use, and option to delete account/data permanently.
+Encrypt sensitive data like resumes, test answers, and emails.
+Store all user data in compliance with Indian data protection rules (DPDP Act) or GDPR.
+Why: Builds trust and avoids future legal issues.
+19. Offline Project Submission Reminder / Tracker
+Add: For project-based assessments, add deadline reminders and upload progress bar or checkpoints.
+Notify recruiter when a project is submitted or overdue.
+Why: Improves tracking of take-home tasks.
+20. Internal Messaging / Chat System
+Add: Secure chat between recruiters and job seekers after shortlisting or approval (optionl).
+Can be moderated or time-limited to avoid spam.
+Why: Adds human touch when needed without using external tools.

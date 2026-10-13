@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Job Seeker Dashboard - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-6 fw-bold">Welcome back, {{ jobseeker.full_name }}!</h1>
+                    <p class="text-muted">Track your applications and discover new opportunities</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('jobseeker.browse_jobs') }}" class="btn btn-success">
+                        <i class="fas fa-search me-2"></i>Browse Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Status Alert -->
+    {% if not jobseeker.resume_filename %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Complete Your Profile</h5>
+                        <p class="mb-2">Upload your resume and complete your profile to start applying for jobs.</p>
+                        <a href="{{ url_for('jobseeker.profile') }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-user-edit me-1"></i>Complete Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Assessments -->
+    {% if pending_assessments %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-clock fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Pending Assessments</h5>
+                        <p class="mb-2">You have {{ pending_assessments|length }} assessment(s) waiting to be completed.</p>
+                        {% for assessment in pending_assessments %}
+                        <a href="{{ url_for('jobseeker.take_assessment', assessment_id=assessment.id) }}" 
+                           class="btn btn-info btn-sm me-2 mb-1">
+                            <i class="fas fa-play me-1"></i>Take Assessment - {{ assessment.application.job.title }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Recent Applications -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Recent Applications
+                    </h5>
+                    <a href="{{ url_for('jobseeker.browse_jobs') }}" class="btn btn-sm btn-outline-success">
+                        Apply to More Jobs
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if applications %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Position</th>
+                                        <th>Company</th>
+                                        <th>Status</th>
+                                        <th>Applied</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in applications %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong>{{ application.job.title }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ application.job.location }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ application.job.recruiter.company_name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ application.job.job_type }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if application.status == 'pending' %}
+                                                <span class="badge bg-warning">Under Review</span>
+                                            {% elif application.status == 'approved' %}
+                                                {% if application.assessment %}
+                                                    {% if application.assessment.status == 'published' %}
+                                                        <span class="badge bg-info">Assessment Ready</span>
+                                                    {% elif application.assessment.status == 'completed' %}
+                                                        <span class="badge bg-success">Assessment Complete</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">Approved</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Selected</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ application.applied_at|time_ago }}</small>
+                                        </td>
+                                        <td>
+                                            {% if application.assessment and application.assessment.status == 'published' %}
+                                                <a href="{{ url_for('jobseeker.take_assessment', assessment_id=application.assessment.id) }}" 
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-play me-1"></i>Take Test
+                                                </a>
+                                            {% elif application.assessment and application.assessment.status == 'completed' %}
+                                                <a href="{{ url_for('jobseeker.assessment_results', assessment_id=application.assessment.id) }}" 
+                                                   class="btn btn-sm btn-success">
+                                                    <i class="fas fa-chart-bar me-1"></i>View Results
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('jobseeker.job_details', job_id=application.job_id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye me-1"></i>View Job
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No applications yet</h5>
+                            <p class="text-muted">Start your job search by browsing available positions</p>
+                            <a href="{{ url_for('jobseeker.browse_jobs') }}" class="btn btn-success">
+                                <i class="fas fa-search me-2"></i>Browse Jobs
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Profile Completion -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>Profile Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set profile_completion = 0 %}
+                    {% if jobseeker.full_name %}{% set profile_completion = profile_completion + 20 %}{% endif %}
+                    {% if jobseeker.mobile_number %}{% set profile_completion = profile_completion + 15 %}{% endif %}
+                    {% if jobseeker.resume_filename %}{% set profile_completion = profile_completion + 30 %}{% endif %}
+                    {% if jobseeker.skills %}{% set profile_completion = profile_completion + 20 %}{% endif %}
+                    {% if jobseeker.experience %}{% set profile_completion = profile_completion + 15 %}{% endif %}
+                    
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: {{ profile_completion }}%" 
+                             aria-valuenow="{{ profile_completion }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ profile_completion }}%
+                        </div>
+                    </div>
+                    
+                    <div class="profile-checklist">
+                        <div class="checklist-item {{ 'completed' if jobseeker.full_name else 'pending' }}">
+                            <i class="fas fa-{{ 'check' if jobseeker.full_name else 'times' }} me-2"></i>
+                            Basic Information
+                        </div>
+                        <div class="checklist-item {{ 'completed' if jobseeker.resume_filename else 'pending' }}">
+                            <i class="fas fa-{{ 'check' if jobseeker.resume_filename else 'times' }} me-2"></i>
+                            Resume Upload
+                        </div>
+                        <div class="checklist-item {{ 'completed' if jobseeker.skills else 'pending' }}">
+                            <i class="fas fa-{{ 'check' if jobseeker.skills else 'times' }} me-2"></i>
+                            Skills Listed
+                        </div>
+                        <div class="checklist-item {{ 'completed' if jobseeker.experience else 'pending' }}">
+                            <i class="fas fa-{{ 'check' if jobseeker.experience else 'times' }} me-2"></i>
+                            Experience Added
+                        </div>
+                    </div>
+                    
+                    <a href="{{ url_for('jobseeker.profile') }}" class="btn btn-outline-primary w-100 mt-3">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-fire me-2"></i>Hot Jobs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_jobs %}
+                        {% for job in recent_jobs %}
+                        <div class="job-item mb-3 pb-3 {{ 'border-bottom' if not loop.last }}">
+                            <h6 class="mb-1">{{ job.title }}</h6>
+                            <p class="text-muted mb-1 small">{{ job.recruiter.company_name }}</p>
+                            <p class="text-muted mb-2 small">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                            </p>
+                            <div class="mb-2">
+                                {% for skill in job.skills_list[:3] %}
+                                    <span class="badge bg-light text-dark me-1">{{ skill }}</span>
+                                {% endfor %}
+                                {% if job.skills_list|length > 3 %}
+                                    <span class="badge bg-secondary">+{{ job.skills_list|length - 3 }}</span>
+                                {% endif %}
+                            </div>
+                            <a href="{{ url_for('jobseeker.job_details', job_id=job.id) }}" 
+                               class="btn btn-sm btn-outline-success">
+                                View Details
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No recent jobs available</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('jobseeker.browse_jobs') }}" class="btn btn-success w-100 mt-2">
+                        <i class="fas fa-search me-2"></i>Browse All Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

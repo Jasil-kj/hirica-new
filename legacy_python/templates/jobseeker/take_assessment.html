@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment - {{ assessment.title }} - Hirica{% endblock %}
+
+{% block extra_head %}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="assessment-container">
+    <!-- Assessment Header -->
+    <div class="assessment-header fixed-top bg-dark shadow">
+        <div class="container-fluid">
+            <div class="row align-items-center py-2">
+                <div class="col-md-4">
+                    <h5 class="text-light mb-0">
+                        <i class="fas fa-brain me-2"></i>{{ assessment.title }}
+                    </h5>
+                    <small class="text-muted">{{ assessment.application.job.title }}</small>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="progress-indicator">
+                        <span class="text-light">Question <span id="currentQuestion">1</span> of {{ questions|length }}</span>
+                        <div class="progress mt-1">
+                            <div class="progress-bar bg-success" role="progressbar" id="progressBar" 
+                                 style="width: {{ (100 / questions|length)|round(1) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="timer-container">
+                        <div class="timer text-light">
+                            <i class="fas fa-clock me-2"></i>
+                            <span id="questionTimer">00:00</span>
+                        </div>
+                        <div class="total-time text-muted small">
+                            Total: <span id="totalTimer">00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Content -->
+    <div class="assessment-content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Question Panel -->
+                <div class="col-lg-8">
+                    <div class="question-panel">
+                        <!-- Instructions (shown initially) -->
+                        <div id="instructionsPanel" class="card">
+                            <div class="card-header bg-info text-white">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Assessment Instructions
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="instructions-content">
+                                    <h5>Important Guidelines:</h5>
+                                    <ul>
+                                        <li>This assessment contains {{ questions|length }} questions</li>
+                                        <li>Total duration: {{ assessment.duration_minutes }} minutes</li>
+                                        <li>Each question has its own time limit</li>
+                                        <li>Questions will be auto-saved when you move to the next one</li>
+                                        <li>You cannot go back to previous questions</li>
+                                        <li>Follow all rules specified for each question</li>
+                                        <li>Violations will be recorded and may affect your score</li>
+                                    </ul>
+
+                                    {% if assessment.instructions %}
+                                    <h5>Additional Instructions:</h5>
+                                    <div class="custom-instructions">
+                                        {{ assessment.instructions|replace('\n', '<br>')|safe }}
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="alert alert-warning mt-4">
+                                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Assessment Rules:</h6>
+                                        <ul class="mb-0">
+                                            <li>Do not refresh the page or use browser back button</li>
+                                            <li>Do not switch tabs or minimize the window unless allowed</li>
+                                            <li>Do not copy-paste unless explicitly permitted</li>
+                                            <li>Keep your webcam enabled if required</li>
+                                            <li>Any violation may result in disqualification</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <button id="startAssessment" class="btn btn-success btn-lg">
+                                        <i class="fas fa-play me-2"></i>Start Assessment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question Content -->
+                        <div id="questionContent" style="display: none;">
+                            {% for question in questions %}
+                            <div class="question-item" id="question-{{ loop.index }}" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h5 class="mb-0">Question {{ loop.index }}</h5>
+                                                <span class="badge bg-{{ 'primary' if question.question_type == 'mcq' else 'success' if question.question_type == 'coding' else 'info' }}">
+                                                    {{ question.question_type.upper() }}
+                                                </span>
+                                            </div>
+                                            <div class="question-timer-display">
+                                                <span class="text-muted">Time: {{ question.time_limit_minutes }} min</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Question Text -->
+                                        <div class="question-text mb-4">
+                                            <h6>{{ question.question_text|replace('\n', '<br>')|safe }}</h6>
+                                        </div>
+
+                                        <!-- Question Rules -->
+                                        <div class="question-rules mb-3">
+                                            <small class="text-muted">Rules for this question:</small>
+                                            <div class="rules-list">
+                                                {% if not question.allow_copy_paste %}
+                                                    <span class="badge bg-danger me-1">No Copy-Paste</span>
+                                                {% endif %}
+                                                {% if not question.allow_tab_switch %}
+                                                    <span class="badge bg-danger me-1">No Tab Switch</span>
+                                                {% endif %}
+                                                {% if not question.allow_minimize %}
+                                                    <span class="badge bg-danger me-1">No Minimize</span>
+                                                {% endif %}
+                                                {% if question.require_webcam %}
+                                                    <span class="badge bg-info me-1">Webcam Required</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <!-- Answer Section -->
+                                        <div class="answer-section">
+                                            {% if question.question_type == 'mcq' %}
+                                                <!-- Multiple Choice -->
+                                                <div class="mcq-options">
+                                                    {% for option in question.options_list %}
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="radio" 
+                                                               name="answer_{{ question.id }}" 
+                                                               id="option_{{ question.id }}_{{ loop.index }}"
+                                                               value="{{ option }}">
+                                                        <label class="form-check-label" for="option_{{ question.id }}_{{ loop.index }}">
+                                                            {{ loop.index }}. {{ option }}
+                                                        </label>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% elif question.question_type == 'coding' %}
+                                                <!-- Coding Question -->
+                                                <div class="coding-section">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Programming Language:</label>
+                                                            <select class="form-select mb-3" id="language_{{ question.id }}">
+                                                                <option value="python">Python</option>
+                                                                <option value="javascript">JavaScript</option>
+                                                                <option value="java">Java</option>
+                                                                <option value="cpp">C++</option>
+                                                                <option value="c">C</option>
+                                                                <option value="csharp">C#</option>
+                                                                <option value="php">PHP</option>
+                                                                <option value="ruby">Ruby</option>
+                                                                <option value="go">Go</option>
+                                                                <option value="rust">Rust</option>
+                                                                <option value="kotlin">Kotlin</option>
+                                                                <option value="swift">Swift</option>
+                                                                <option value="typescript">TypeScript</option>
+                                                                <option value="scala">Scala</option>
+                                                                <option value="r">R</option>
+                                                                <option value="perl">Perl</option>
+                                                                <option value="lua">Lua</option>
+                                                                <option value="dart">Dart</option>
+                                                                <option value="sql">SQL</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-6 text-end">
+                                                            <button type="button" class="btn btn-success btn-sm mt-4" 
+                                                                    onclick="runCode({{ question.id }})">
+                                                                <i class="fas fa-play me-1"></i>Run Code
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="code-editor-container">
+                                                        <textarea id="code_{{ question.id }}" class="code-editor" 
+                                                                  placeholder="Write your code here..."></textarea>
+                                                    </div>
+                                                    
+                                                    <div class="output-section mt-3">
+                                                        <label class="form-label">Output:</label>
+                                                        <div id="output_{{ question.id }}" class="code-output">
+                                                            <!-- Code output will appear here -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <!-- Descriptive Question -->
+                                                <div class="descriptive-section">
+                                                    <textarea id="answer_{{ question.id }}" class="form-control" 
+                                                              rows="8" placeholder="Enter your detailed answer here..."></textarea>
+                                                    <div class="form-text">
+                                                        Provide a comprehensive answer explaining your thoughts and reasoning.
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Violation Tracking -->
+                                        <div id="violations_{{ question.id }}" class="violations-display" style="display: none;">
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                <strong>Rule Violation Detected!</strong>
+                                                <div id="violation_text_{{ question.id }}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <div class="d-flex justify-content-between">
+                                            <div class="question-info">
+                                                <small class="text-muted">
+                                                    Question {{ loop.index }} of {{ questions|length }}
+                                                </small>
+                                            </div>
+                                            <div class="question-actions">
+                                                {% if loop.last %}
+                                                    <button type="button" class="btn btn-success" 
+                                                            onclick="completeAssessment()">
+                                                        <i class="fas fa-check me-2"></i>Complete Assessment
+                                                    </button>
+                                                {% else %}
+                                                    <button type="button" class="btn btn-primary" 
+                                                            onclick="nextQuestion({{ loop.index }}, {{ question.id }})">
+                                                        <i class="fas fa-arrow-right me-2"></i>Next Question
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Completion Panel -->
+                        <div id="completionPanel" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">
+                                        <i class="fas fa-check-circle me-2"></i>Assessment Completed
+                                    </h4>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="completion-content">
+                                        <i class="fas fa-trophy fa-4x text-success mb-3"></i>
+                                        <h5>Congratulations!</h5>
+                                        <p class="text-muted">
+                                            You have successfully completed the assessment. Your responses have been submitted
+                                            and results will be available shortly.
+                                        </p>
+                                        <div class="completion-stats mt-4">
+                                            <div class="row text-center">
+                                                <div class="col-md-4">
+                                                    <h6 class="text-muted">Questions Answered</h6>
+                                                    <h4 id="answeredCount">{{ questions|length }}</h4>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h6 class="text-muted">Time Taken</h6>
+                                                    <h4 id="totalTimeTaken">--:--</h4>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h6 class="text-muted">Status</h6>
+                                                    <h4 class="text-success">Submitted</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a href="{{ url_for('jobseeker.dashboard') }}" class="btn btn-primary mt-4">
+                                            <i class="fas fa-home me-2"></i>Back to Dashboard
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <div class="assessment-sidebar">
+                        <!-- Assessment Info -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Assessment Info
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td><strong>Position:</strong></td>
+                                        <td>{{ assessment.application.job.title }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Company:</strong></td>
+                                        <td>{{ assessment.application.job.recruiter.company_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Questions:</strong></td>
+                                        <td>{{ questions|length }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Duration:</strong></td>
+                                        <td>{{ assessment.duration_minutes }} minutes</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Question Navigation -->
+                        <div class="card mt-3" id="questionNav" style="display: none;">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-list me-2"></i>Question Progress
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="question-grid">
+                                    {% for question in questions %}
+                                    <div class="question-nav-item" id="nav-{{ loop.index }}" data-question="{{ loop.index }}">
+                                        <span class="question-number">{{ loop.index }}</span>
+                                        <span class="question-status">
+                                            <i class="fas fa-clock text-muted"></i>
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="legend mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock text-muted me-1"></i>Pending
+                                        <i class="fas fa-check text-success me-1 ms-2"></i>Completed
+                                        <i class="fas fa-play text-primary me-1 ms-2"></i>Current
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Help & Support -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-question-circle me-2"></i>Need Help?
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text small">
+                                    If you encounter technical issues during the assessment, 
+                                    please contact support immediately.
+                                </p>
+                                <button class="btn btn-outline-primary btn-sm w-100" 
+                                        onclick="reportIssue()">
+                                    <i class="fas fa-bug me-1"></i>Report Issue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for data submission -->
+<form id="assessmentForm" style="display: none;">
+    <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
+    <input type="hidden" name="submission_id" value="{{ submission.id }}">
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+
+<!-- Assessment specific JS -->
+<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
+<script src="{{ url_for('static', filename='js/code_editor.js') }}"></script>
+
+<script>
+// Initialize assessment
+document.addEventListener('DOMContentLoaded', function() {
+    const assessmentData = {
+        assessmentId: {{ assessment.id }},
+        submissionId: {{ submission.id }},
+        questions: {{ questions|tojson }},
+        totalDuration: {{ assessment.duration_minutes }}
+    };
+    
+    initializeAssessment(assessmentData);
+});
+</script>
+{% endblock %}

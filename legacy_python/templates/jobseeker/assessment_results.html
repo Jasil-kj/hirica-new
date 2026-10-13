@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Results - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('jobseeker.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Assessment Results</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Results Overview -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-1">{{ assessment.title }}</h3>
+                            <p class="card-text mb-0">{{ assessment.application.job.title }} • {{ assessment.application.job.recruiter.company_name }}</p>
+                        </div>
+                        <div class="text-end">
+                            {% if submission.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif submission.status == 'graded' %}
+                                <span class="badge bg-info">Graded</span>
+                            {% else %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Score Overview -->
+                    {% if submission.total_score is not none %}
+                    <div class="score-overview mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="score-card text-center">
+                                    <div class="score-circle">
+                                        <div class="score-value">
+                                            {{ "%.1f"|format(submission.total_score) }}
+                                        </div>
+                                        <div class="score-max">/ {{ "%.1f"|format(submission.max_score) }}</div>
+                                    </div>
+                                    <h6 class="mt-2">Total Score</h6>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="score-card text-center">
+                                    <div class="percentage-circle">
+                                        {% set percentage = (submission.total_score / submission.max_score * 100) if submission.max_score > 0 else 0 %}
+                                        <div class="percentage-value">
+                                            {{ "%.0f"|format(percentage) }}%
+                                        </div>
+                                    </div>
+                                    <h6 class="mt-2">Percentage</h6>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="score-card text-center">
+                                    <div class="time-display">
+                                        <div class="time-value">
+                                            {% if submission.submitted_at and submission.started_at %}
+                                                {% set duration = (submission.submitted_at - submission.started_at).total_seconds() %}
+                                                {{ "%d:%02d"|format(duration // 60, duration % 60) }}
+                                            {% else %}
+                                                --:--
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <h6 class="mt-2">Time Taken</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Performance Breakdown -->
+                    <div class="performance-breakdown mb-4">
+                        <h5><i class="fas fa-chart-bar me-2"></i>Performance Breakdown</h5>
+                        <div class="row">
+                            {% set all_answers = submission.answers.all() %}
+                            {% set mcq_answers = all_answers | selectattr('question.question_type', 'equalto', 'mcq') | list %}
+                            {% set coding_answers = all_answers | selectattr('question.question_type', 'equalto', 'coding') | list %}
+                            {% set descriptive_answers = all_answers | selectattr('question.question_type', 'equalto', 'descriptive') | list %}
+                            
+                            {% if mcq_answers %}
+                            <div class="col-md-4">
+                                <div class="performance-item">
+                                    <div class="performance-icon bg-primary">
+                                        <i class="fas fa-list-ul"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <h6>Multiple Choice</h6>
+                                        <p class="text-muted mb-1">{{ mcq_answers|length }} questions</p>
+                                        <div class="progress">
+                                            {% set mcq_correct = mcq_answers|selectattr('correct', 'equalto', true)|list|length %}
+                                            {% set mcq_percentage = (mcq_correct / mcq_answers|length * 100) if mcq_answers|length > 0 else 0 %}
+                                            <div class="progress-bar bg-primary" style="width: {{ mcq_percentage }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ mcq_correct }}/{{ mcq_answers|length }} correct</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if coding_answers %}
+                            <div class="col-md-4">
+                                <div class="performance-item">
+                                    <div class="performance-icon bg-success">
+                                        <i class="fas fa-code"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <h6>Coding</h6>
+                                        <p class="text-muted mb-1">{{ coding_answers|length }} questions</p>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" style="width: 75%"></div>
+                                        </div>
+                                        <small class="text-muted">Solutions submitted</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if descriptive_answers %}
+                            <div class="col-md-4">
+                                <div class="performance-item">
+                                    <div class="performance-icon bg-info">
+                                        <i class="fas fa-pen"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <h6>Descriptive</h6>
+                                        <p class="text-muted mb-1">{{ descriptive_answers|length }} questions</p>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" style="width: 80%"></div>
+                                        </div>
+                                        <small class="text-muted">Answers provided</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Detailed Results -->
+                    <div class="detailed-results">
+                        <h5><i class="fas fa-list-alt me-2"></i>Question-wise Results</h5>
+                        
+                        {% for answer in submission.answers.all() %}
+                        <div class="result-item mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Question {{ loop.index }}</h6>
+                                            <span class="badge bg-{{ 'primary' if answer.question.question_type == 'mcq' else 'success' if answer.question.question_type == 'coding' else 'info' }}">
+                                                {{ answer.question.question_type.upper() }}
+                                            </span>
+                                        </div>
+                                        <div class="result-status">
+                                            {% if answer.question.question_type == 'mcq' %}
+                                                {% if answer.answer_text == answer.question.correct_answer %}
+                                                    <span class="badge bg-success">Correct</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Incorrect</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">Submitted</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="question-text mb-3">
+                                        <strong>Question:</strong> {{ answer.question.question_text }}
+                                    </div>
+                                    
+                                    {% if answer.question.question_type == 'mcq' %}
+                                        <div class="mcq-result">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <strong>Your Answer:</strong>
+                                                    <div class="answer-display {{ 'text-success' if answer.answer_text == answer.question.correct_answer else 'text-danger' }}">
+                                                        {{ answer.answer_text or 'Not answered' }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>Correct Answer:</strong>
+                                                    <div class="answer-display text-success">
+                                                        {{ answer.question.correct_answer }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% elif answer.question.question_type == 'coding' %}
+                                        <div class="coding-result">
+                                            {% if answer.code_answer %}
+                                                <div class="code-section mb-3">
+                                                    <strong>Your Code ({{ answer.code_language or 'Unknown' }}):</strong>
+                                                    <pre class="code-display"><code>{{ answer.code_answer }}</code></pre>
+                                                </div>
+                                                
+                                                {% if answer.code_output %}
+                                                    <div class="output-section">
+                                                        <strong>Output:</strong>
+                                                        <pre class="output-display">{{ answer.code_output }}</pre>
+                                                    </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="text-muted">No code submitted</div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="descriptive-result">
+                                            {% if answer.answer_text %}
+                                                <strong>Your Answer:</strong>
+                                                <div class="answer-text">
+                                                    {{ answer.answer_text|replace('\n', '<br>')|safe }}
+                                                </div>
+                                            {% else %}
+                                                <div class="text-muted">No answer provided</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Time taken -->
+                                    {% if answer.time_taken %}
+                                    <div class="time-info mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Time taken: {{ (answer.time_taken // 60) }}:{{ "%02d"|format(answer.time_taken % 60) }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Violations (if any) -->
+                    {% if submission.violations %}
+                    <div class="violations-section mt-4">
+                        <h5 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Rule Violations</h5>
+                        <div class="alert alert-warning">
+                            {% set violations = submission.violations|from_json %}
+                            <ul class="mb-0">
+                                {% for violation in violations %}
+                                <li>{{ violation.description }} ({{ violation.timestamp }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('jobseeker.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Assessment Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Assessment Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>Submitted:</strong></td>
+                            <td>{{ submission.submitted_at|datetime if submission.submitted_at else 'In Progress' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Questions:</strong></td>
+                            <td>{{ submission.answers.count() }}/{{ assessment.total_questions }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Duration:</strong></td>
+                            <td>{{ assessment.duration_minutes }} minutes</td>
+                        </tr>
+                        {% if submission.total_score is not none %}
+                        <tr>
+                            <td><strong>Score:</strong></td>
+                            <td>{{ "%.1f"|format(submission.total_score) }}/{{ "%.1f"|format(submission.max_score) }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-route me-2"></i>Next Steps
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="next-steps">
+                        <div class="step completed">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Assessment Completed
+                        </div>
+                        <div class="step current">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            Results Under Review
+                        </div>
+                        <div class="step pending">
+                            <i class="fas fa-envelope text-muted me-2"></i>
+                            Final Decision
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            The recruiter will review your assessment results and contact you with the next steps.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-star me-2"></i>Assessment Feedback
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Help us improve by rating this assessment experience.
+                    </p>
+                    <div class="rating-stars mb-3">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="far fa-star text-muted"></i>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-comment me-1"></i>Leave Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Project Tasks Section -->
+        {% if project_tasks %}
+        <div class="col-12 mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>Project Tasks
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for task in project_tasks %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-left-primary">
+                                <div class="card-body">
+                                    <h6>{{ task.title }}</h6>
+                                    <p class="text-muted">{{ task.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-warning deadline-badge"
+                                              data-created-at="{{ task.created_at.isoformat() }}"
+                                              data-deadline-hours="{{ task.deadline_hours }}">
+                                            {{ task.deadline_hours }} hours
+                                        </span>
+                                        {% set existing_submission = task.submissions.first() %}
+                                        {% if existing_submission %}
+                                            <span class="badge bg-success">Submitted</span>
+                                        {% else %}
+                                            <a href="{{ url_for('jobseeker.submit_project', project_id=task.id) }}" class="btn btn-sm btn-outline-primary">
+                                                Submit Project
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    <div class="deadline-remaining mt-2 text-danger small" id="deadline-remaining-{{ task.id }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Rating functionality
+    const stars = document.querySelectorAll('.rating-stars i');
+    stars.forEach((star, index) => {
+        star.addEventListener('click', function() {
+            stars.forEach((s, i) => {
+                if (i <= index) {
+                    s.classList.remove('far');
+                    s.classList.add('fas', 'text-warning');
+                } else {
+                    s.classList.remove('fas', 'text-warning');
+                    s.classList.add('far', 'text-muted');
+                }
+            });
+        });
+    });
+
+    // Countdown for each project task
+    document.querySelectorAll('.deadline-badge').forEach(function(badge) {
+        const createdAt = new Date(badge.dataset.createdAt);
+        const deadlineHours = parseInt(badge.dataset.deadlineHours);
+        const deadline = new Date(createdAt.getTime() + deadlineHours * 60 * 60 * 1000);
+        const now = new Date();
+        const remainingMs = deadline - now;
+        const remainingH = Math.floor(remainingMs / (1000 * 60 * 60));
+        const remainingM = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        const remainingS = Math.floor((remainingMs % (1000 * 60)) / 1000);
+        const id = badge.closest('.card-body').querySelector('.deadline-remaining').id;
+        let msg = '';
+        if (remainingMs > 0) {
+            msg = `Time left: <b>${remainingH}h ${remainingM}m</b>`;
+            if (remainingH < 24) msg += ' <span class="text-warning">(Due soon!)</span>';
+            if (remainingH < 1) msg += ' <span class="text-danger">(Less than 1 hour left!)</span>';
+        } else {
+            msg = '<span class="text-danger">Overdue! Submit as soon as possible.</span>';
+        }
+        document.getElementById(id).innerHTML = msg;
+    });
+</script>
+{% endblock %}

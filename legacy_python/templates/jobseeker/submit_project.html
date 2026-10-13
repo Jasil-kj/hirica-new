@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Project - Hirica{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Submit Project
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="project-info mb-4">
+                        <h5 class="text-primary">{{ project.title }}</h5>
+                        <p class="text-muted">{{ project.description }}</p>
+                        
+                        {% if project.requirements %}
+                        <div class="requirements-section">
+                            <h6 class="fw-bold">Requirements:</h6>
+                            <div class="bg-light p-3 rounded">
+                                {{ project.requirements|nl2br }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="deadline-info mt-3">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <span class="text-muted deadline-badge"
+                                  data-created-at="{{ project.created_at.isoformat() }}"
+                                  data-deadline-hours="{{ project.deadline_hours }}">
+                                Deadline: {{ project.deadline_hours }} hours from assignment
+                            </span>
+                            <div class="deadline-remaining mt-2 text-danger small" id="deadline-remaining"></div>
+                        </div>
+                    </div>
+                    
+                    <form id="projectUploadForm" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="project_file" class="form-label">Project File (ZIP format)</label>
+                            <input type="file" class="form-control" id="project_file" name="project_file" accept=".zip" required>
+                            <div class="form-text">Please upload your project as a ZIP file (max 50MB)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                      placeholder="Add any additional information about your project submission..."></textarea>
+                        </div>
+                        <div class="progress mb-3" id="uploadProgressContainer" style="display:none;">
+                            <div class="progress-bar" id="uploadProgressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('jobseeker.assessment_results', assessment_id=project.assessment_id) }}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Assessment
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-upload me-2"></i>Submit Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Countdown for project deadline
+    const badge = document.querySelector('.deadline-badge');
+    if (badge) {
+        const createdAt = new Date(badge.dataset.createdAt);
+        const deadlineHours = parseInt(badge.dataset.deadlineHours);
+        const deadline = new Date(createdAt.getTime() + deadlineHours * 60 * 60 * 1000);
+        const now = new Date();
+        const remainingMs = deadline - now;
+        const remainingH = Math.floor(remainingMs / (1000 * 60 * 60));
+        const remainingM = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        const remainingS = Math.floor((remainingMs % (1000 * 60)) / 1000);
+        let msg = '';
+        if (remainingMs > 0) {
+            msg = `Time left: <b>${remainingH}h ${remainingM}m</b>`;
+            if (remainingH < 24) msg += ' <span class="text-warning">(Due soon!)</span>';
+            if (remainingH < 1) msg += ' <span class="text-danger">(Less than 1 hour left!)</span>';
+        } else {
+            msg = '<span class="text-danger">Overdue! Submit as soon as possible.</span>';
+        }
+        document.getElementById('deadline-remaining').innerHTML = msg;
+    }
+    // Progress bar for file upload
+    const form = document.getElementById('projectUploadForm');
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const submitBtn = document.getElementById('submitBtn');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('project_file');
+            if (!fileInput.files.length) return;
+            const formData = new FormData(form);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', window.location.href, true);
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressBar.setAttribute('aria-valuenow', percent);
+                    progressBar.textContent = percent + '%';
+                    progressContainer.style.display = 'block';
+                }
+            };
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    progressBar.classList.add('bg-success');
+                    progressBar.textContent = 'Upload Complete!';
+                    setTimeout(function() { window.location.reload(); }, 1200);
+                } else {
+                    progressBar.classList.add('bg-danger');
+                    progressBar.textContent = 'Upload Failed!';
+                    submitBtn.disabled = false;
+                }
+            };
+            xhr.onerror = function() {
+                progressBar.classList.add('bg-danger');
+                progressBar.textContent = 'Upload Error!';
+                submitBtn.disabled = false;
+            };
+            submitBtn.disabled = true;
+            xhr.send(formData);
+        });
+    }
+});
+</script>
+{% endblock %}

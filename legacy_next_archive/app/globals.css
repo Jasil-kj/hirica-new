@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #0F52BA;
+  --color-brand-darkBlue: #051b4d;
+  --color-brand-navy: #0a0f25;
+  --color-brand-black: #000000;
+  --color-brand-white: #ffffff;
+  --color-brand-gray: #f9fafb;
+  --color-brand-textMuted: #6b7280;
+  --font-sans: var(--font-inter), sans-serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Funnel Clip Paths */
+.clip-funnel-top {
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+}
+.clip-funnel-mid {
+  clip-path: polygon(5% 0, 95% 0, 90% 100%, 10% 100%);
+}
+.clip-funnel-mid2 {
+  clip-path: polygon(10% 0, 90% 0, 85% 100%, 15% 100%);
+}
+.clip-funnel-bottom {
+  clip-path: polygon(15% 0, 85% 0, 85% 100%, 15% 100%);
+}

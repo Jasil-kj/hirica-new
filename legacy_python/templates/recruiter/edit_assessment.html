@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Assessment - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-6 fw-bold">Edit Assessment</h1>
+                    <p class="text-muted">{{ assessment.title }}</p>
+                </div>
+                <div>
+                    {% if assessment.status == 'draft' %}
+                        <a href="{{ url_for('recruiter.publish_assessment', assessment_id=assessment.id) }}" 
+                           class="btn btn-success">
+                            <i class="fas fa-paper-plane me-2"></i>Publish Assessment
+                        </a>
+                    {% else %}
+                        <span class="badge bg-success">Published</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Assessment Info -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Assessment Info
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>Candidate:</strong></td>
+                            <td>{{ assessment.application.jobseeker.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Position:</strong></td>
+                            <td>{{ assessment.application.job.title }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Duration:</strong></td>
+                            <td>{{ assessment.duration_minutes }} minutes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Questions:</strong></td>
+                            <td>{{ assessment.total_questions }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                <span class="badge bg-{{ 'warning' if assessment.status == 'draft' else 'success' }}">
+                                    {{ assessment.status.title() }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            {% if assessment.instructions %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Instructions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ assessment.instructions }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Questions -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Questions ({{ questions|length }})
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                        <i class="fas fa-plus me-1"></i>Add Question
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        {% for question in questions %}
+                        <div class="question-card mb-3" id="question-{{ question.id }}">
+                            <div class="question-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="question-info">
+                                        <span class="question-number">Q{{ question.order_number }}</span>
+                                        <span class="badge bg-{{ 'primary' if question.question_type == 'mcq' else 'success' if question.question_type == 'coding' else 'info' }}">
+                                            {{ question.question_type.upper() }}
+                                        </span>
+                                        <span class="badge bg-secondary">{{ question.time_limit_minutes }}min</span>
+                                    </div>
+                                    <div class="question-actions">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editQuestion({{ question.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" onclick="regenerateQuestion({{ question.id }})">
+                                            <i class="fas fa-sync"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteQuestion({{ question.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="question-content">
+                                <p class="question-text">{{ question.question_text }}</p>
+                                
+                                {% if question.question_type == 'mcq' and question.options_list %}
+                                <div class="options">
+                                    {% for option in question.options_list %}
+                                    <div class="option">
+                                        <span class="option-label">{{ loop.index }}.</span>
+                                        <span class="option-text">{{ option }}</span>
+                                        {% if option == question.correct_answer %}
+                                            <i class="fas fa-check text-success ms-2"></i>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Rules -->
+                                <div class="question-rules mt-2">
+                                    <small class="text-muted">Rules: </small>
+                                    {% if not question.allow_copy_paste %}<span class="badge bg-danger">No Copy-Paste</span>{% endif %}
+                                    {% if not question.allow_tab_switch %}<span class="badge bg-danger">No Tab Switch</span>{% endif %}
+                                    {% if not question.allow_minimize %}<span class="badge bg-danger">No Minimize</span>{% endif %}
+                                    {% if question.require_webcam %}<span class="badge bg-info">Webcam Required</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No questions generated yet</h5>
+                            <p class="text-muted">AI will generate questions based on the job requirements</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Custom Question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addQuestionForm">
+                    <div class="mb-3">
+                        <label class="form-label">Question Type</label>
+                        <select class="form-select" name="question_type" required>
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="coding">Coding</option>
+                            <option value="descriptive">Descriptive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Question Text</label>
+                        <textarea class="form-control" name="question_text" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Time Limit (minutes)</label>
+                        <input type="number" class="form-control" name="time_limit" value="5" min="1" max="60" required>
+                    </div>
+                    
+                    <!-- MCQ Options (shown conditionally) -->
+                    <div id="mcqOptions" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Options</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_a" placeholder="Option A">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_b" placeholder="Option B">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_c" placeholder="Option C">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_d" placeholder="Option D">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Correct Answer</label>
+                            <input type="text" class="form-control" name="correct_answer" placeholder="Enter the correct option text">
+                        </div>
+                    </div>
+                    
+                    <!-- Rules -->
+                    <div class="mb-3">
+                        <label class="form-label">Rules</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_copy_paste" id="allowCopyPaste">
+                            <label class="form-check-label" for="allowCopyPaste">Allow Copy-Paste</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_tab_switch" id="allowTabSwitch">
+                            <label class="form-check-label" for="allowTabSwitch">Allow Tab Switching</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_minimize" id="allowMinimize">
+                            <label class="form-check-label" for="allowMinimize">Allow Window Minimize</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="require_webcam" id="requireWebcam">
+                            <label class="form-check-label" for="requireWebcam">Require Webcam</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addQuestion()">Add Question</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <input type="hidden" name="question_id">
+                    <div class="mb-3">
+                        <label class="form-label">Question Type</label>
+                        <select class="form-select" name="question_type" required>
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="coding">Coding</option>
+                            <option value="descriptive">Descriptive</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Question Text</label>
+                        <textarea class="form-control" name="question_text" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Time Limit (minutes)</label>
+                        <input type="number" class="form-control" name="time_limit_minutes" value="5" min="1" max="60" required>
+                    </div>
+                    <div id="editMcqOptions" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Options</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_a" placeholder="Option A">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_b" placeholder="Option B">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_c" placeholder="Option C">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <input type="text" class="form-control" name="option_d" placeholder="Option D">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correct Answer</label>
+                            <input type="text" class="form-control" name="correct_answer" placeholder="Enter the correct option text">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rules</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_copy_paste" id="editAllowCopyPaste">
+                            <label class="form-check-label" for="editAllowCopyPaste">Allow Copy-Paste</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_tab_switch" id="editAllowTabSwitch">
+                            <label class="form-check-label" for="editAllowTabSwitch">Allow Tab Switching</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allow_minimize" id="editAllowMinimize">
+                            <label class="form-check-label" for="editAllowMinimize">Allow Window Minimize</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="require_webcam" id="editRequireWebcam">
+                            <label class="form-check-label" for="editRequireWebcam">Require Webcam</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditQuestionBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide MCQ options based on question type (Add)
+    const questionTypeSelect = document.querySelector('select[name="question_type"]');
+    const mcqOptions = document.getElementById('mcqOptions');
+    questionTypeSelect.addEventListener('change', function() {
+        if (this.value === 'mcq') {
+            mcqOptions.style.display = 'block';
+        } else {
+            mcqOptions.style.display = 'none';
+        }
+    });
+    // Show/hide MCQ options based on question type (Edit)
+    const editQuestionTypeSelect = document.querySelector('#editQuestionForm select[name="question_type"]');
+    const editMcqOptions = document.getElementById('editMcqOptions');
+    if (editQuestionTypeSelect) {
+        editQuestionTypeSelect.addEventListener('change', function() {
+            if (this.value === 'mcq') {
+                editMcqOptions.style.display = 'block';
+            } else {
+                editMcqOptions.style.display = 'none';
+            }
+        });
+    }
+});
+
+function regenerateQuestion(questionId) {
+    if (confirm('Are you sure you want to regenerate this question? The current question will be replaced.')) {
+        fetch(`/recruiter/api/question/${questionId}/regenerate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                updateQuestionCard(data.question);
+            } else {
+                alert(data.error || 'Failed to regenerate question.');
+            }
+        })
+        .catch(() => alert('Failed to regenerate question.'));
+    }
+}
+
+function editQuestion(questionId) {
+    // Find the question card and extract data
+    const card = document.getElementById('question-' + questionId);
+    if (!card) return;
+    // Extract data from DOM (or store in JS for more robust solution)
+    const questionText = card.querySelector('.question-text').innerText;
+    const badges = card.querySelectorAll('.badge');
+    let questionType = 'mcq';
+    for (let b of badges) {
+        if (['MCQ', 'CODING', 'DESCRIPTIVE'].includes(b.innerText.trim().toUpperCase())) {
+            questionType = b.innerText.trim().toLowerCase();
+            break;
+        }
+    }
+    const timeLimit = parseInt(card.querySelector('.badge.bg-secondary').innerText) || 5;
+    // Rules
+    let allowCopyPaste = true, allowTabSwitch = true, allowMinimize = true, requireWebcam = false;
+    const ruleBadges = card.querySelectorAll('.question-rules .badge');
+    ruleBadges.forEach(badge => {
+        if (badge.innerText.includes('No Copy-Paste')) allowCopyPaste = false;
+        if (badge.innerText.includes('No Tab Switch')) allowTabSwitch = false;
+        if (badge.innerText.includes('No Minimize')) allowMinimize = false;
+        if (badge.innerText.includes('Webcam Required')) requireWebcam = true;
+    });
+    // MCQ options
+    let options = [];
+    let correctAnswer = '';
+    if (questionType === 'mcq') {
+        options = Array.from(card.querySelectorAll('.option-text')).map(el => el.innerText);
+        const correctEl = card.querySelector('.option .fa-check');
+        if (correctEl) {
+            correctAnswer = correctEl.parentElement.querySelector('.option-text').innerText;
+        }
+    }
+    // Fill modal fields
+    const form = document.getElementById('editQuestionForm');
+    form.question_id.value = questionId;
+    form.question_type.value = questionType;
+    form.question_text.value = questionText;
+    form.time_limit_minutes.value = timeLimit;
+    form.allow_copy_paste.checked = allowCopyPaste;
+    form.allow_tab_switch.checked = allowTabSwitch;
+    form.allow_minimize.checked = allowMinimize;
+    form.require_webcam.checked = requireWebcam;
+    if (questionType === 'mcq') {
+        document.getElementById('editMcqOptions').style.display = 'block';
+        form.option_a.value = options[0] || '';
+        form.option_b.value = options[1] || '';
+        form.option_c.value = options[2] || '';
+        form.option_d.value = options[3] || '';
+        form.correct_answer.value = correctAnswer;
+    } else {
+        document.getElementById('editMcqOptions').style.display = 'none';
+        form.option_a.value = '';
+        form.option_b.value = '';
+        form.option_c.value = '';
+        form.option_d.value = '';
+        form.correct_answer.value = '';
+    }
+    // Show modal
+    var modal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+    modal.show();
+}
+
+document.getElementById('saveEditQuestionBtn').onclick = function() {
+    const form = document.getElementById('editQuestionForm');
+    const questionId = form.question_id.value;
+    const data = {
+        question_text: form.question_text.value,
+        question_type: form.question_type.value,
+        time_limit_minutes: parseInt(form.time_limit_minutes.value),
+        allow_copy_paste: form.allow_copy_paste.checked,
+        allow_tab_switch: form.allow_tab_switch.checked,
+        allow_minimize: form.allow_minimize.checked,
+        require_webcam: form.require_webcam.checked
+    };
+    if (form.question_type.value === 'mcq') {
+        data.options = [form.option_a.value, form.option_b.value, form.option_c.value, form.option_d.value].filter(Boolean);
+        data.correct_answer = form.correct_answer.value;
+    }
+    fetch(`/recruiter/api/question/${questionId}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            updateQuestionCard(data.question);
+            var modal = bootstrap.Modal.getInstance(document.getElementById('editQuestionModal'));
+            modal.hide();
+        } else {
+            alert(data.error || 'Failed to edit question.');
+        }
+    })
+    .catch(() => alert('Failed to edit question.'));
+};
+
+function updateQuestionCard(q) {
+    // Find the card and update its content
+    const card = document.getElementById('question-' + q.id);
+    if (!card) return;
+    // Update question text
+    card.querySelector('.question-text').innerText = q.question_text;
+    // Update type and time badges
+    const badges = card.querySelectorAll('.badge');
+    badges[0].innerText = q.question_type.toUpperCase();
+    badges[1].innerText = q.time_limit_minutes + 'min';
+    // Update options (for MCQ)
+    const optionsDiv = card.querySelector('.options');
+    if (optionsDiv) {
+        optionsDiv.innerHTML = '';
+        q.options.forEach((opt, idx) => {
+            const isCorrect = (opt === q.correct_answer);
+            optionsDiv.innerHTML += `<div class="option"><span class="option-label">${idx+1}.</span><span class="option-text">${opt}</span>${isCorrect ? '<i class=\'fas fa-check text-success ms-2\'></i>' : ''}</div>`;
+        });
+    }
+    // Update rules
+    const rulesDiv = card.querySelector('.question-rules');
+    let rulesHtml = '<small class="text-muted">Rules: </small>';
+    if (!q.allow_copy_paste) rulesHtml += '<span class="badge bg-danger">No Copy-Paste</span>';
+    if (!q.allow_tab_switch) rulesHtml += '<span class="badge bg-danger">No Tab Switch</span>';
+    if (!q.allow_minimize) rulesHtml += '<span class="badge bg-danger">No Minimize</span>';
+    if (q.require_webcam) rulesHtml += '<span class="badge bg-info">Webcam Required</span>';
+    rulesDiv.innerHTML = rulesHtml;
+}
+</script>
+{% endblock %}

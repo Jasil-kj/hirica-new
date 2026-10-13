@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Jobs - Hirica{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-6 fw-bold">Browse Jobs</h1>
+                    <p class="text-muted">Find your next opportunity</p>
+                </div>
+                <div>
+                    <span class="text-muted">{{ jobs.total }} jobs found</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="search" 
+                                   placeholder="Search jobs, skills, companies..." 
+                                   value="{{ search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="job_type">
+                                <option value="">All Job Types</option>
+                                <option value="Full-time" {{ 'selected' if job_type == 'Full-time' }}>Full-time</option>
+                                <option value="Part-time" {{ 'selected' if job_type == 'Part-time' }}>Part-time</option>
+                                <option value="Internship" {{ 'selected' if job_type == 'Internship' }}>Internship</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="location" 
+                                   placeholder="Location" value="{{ location }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search me-1"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% if jobs.items %}
+                <div class="row g-4">
+                    {% for job in jobs.items %}
+                    <div class="col-lg-6">
+                        <div class="card job-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ job.title }}</h5>
+                                    <h6 class="card-subtitle text-muted">{{ job.recruiter.company_name }}</h6>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success">{{ job.job_type }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ job.created_at|time_ago }}</small>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="job-meta mb-3">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Location</small>
+                                            <small><i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Experience</small>
+                                            <small>{{ job.experience_level }}</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Deadline</small>
+                                            <small>{{ job.expiry_date.strftime('%m/%d/%Y') }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if job.salary %}
+                                <div class="salary mb-3">
+                                    <i class="fas fa-dollar-sign text-success me-2"></i>
+                                    <span class="text-success">{{ job.salary }}</span>
+                                </div>
+                                {% endif %}
+
+                                <!-- Job Description Preview -->
+                                <div class="job-description mb-3">
+                                    <p class="text-muted">
+                                        {{ job.description[:150] }}
+                                        {% if job.description|length > 150 %}...{% endif %}
+                                    </p>
+                                </div>
+
+                                <!-- Skills -->
+                                <div class="skills mb-3">
+                                    {% for skill in job.skills_list[:6] %}
+                                        <span class="badge bg-secondary me-1 mb-1">{{ skill }}</span>
+                                    {% endfor %}
+                                    {% if job.skills_list|length > 6 %}
+                                        <span class="badge bg-light text-dark">+{{ job.skills_list|length - 6 }} more</span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Application Status -->
+                                {% set user_application = job.applications.filter_by(jobseeker_id=current_user.jobseeker_profile.id).first() %}
+                                {% if user_application %}
+                                    <div class="application-status mb-3">
+                                        {% if user_application.status == 'pending' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>Application Under Review
+                                            </span>
+                                        {% elif user_application.status == 'approved' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Application Approved
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Application Not Selected
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{{ url_for('jobseeker.job_details', job_id=job.id) }}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    
+                                    {% if user_application %}
+                                        {% if user_application.status == 'approved' and user_application.assessment and user_application.assessment.status == 'published' %}
+                                            <a href="{{ url_for('jobseeker.take_assessment', assessment_id=user_application.assessment.id) }}" 
+                                               class="btn btn-info">
+                                                <i class="fas fa-play me-1"></i>Take Assessment
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Applied</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if job.is_expired %}
+                                            <span class="text-danger">Expired</span>
+                                        {% else %}
+                                            <a href="{{ url_for('jobseeker.apply_job', job_id=job.id) }}" 
+                                               class="btn btn-success">
+                                                <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if jobs.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if jobs.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('jobseeker.browse_jobs', page=jobs.prev_num, search=search, job_type=job_type, location=location) }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in jobs.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != jobs.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('jobseeker.browse_jobs', page=page_num, search=search, job_type=job_type, location=location) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if jobs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('jobseeker.browse_jobs', page=jobs.next_num, search=search, job_type=job_type, location=location) }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No jobs found</h4>
+                        <p class="text-muted">Try adjusting your search criteria or check back later for new opportunities.</p>
+                        <a href="{{ url_for('jobseeker.browse_jobs') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-refresh me-2"></i>Clear Filters
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
